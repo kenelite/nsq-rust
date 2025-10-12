@@ -19,11 +19,9 @@ Thumbs.db
 
 # Rust
 target/
-Cargo.lock
 
 # Node.js
 nsqadmin-ui/node_modules/
-nsqadmin-ui/dist/
 nsqadmin-ui/.npm
 nsqadmin-ui/.vite
 

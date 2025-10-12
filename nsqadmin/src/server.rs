@@ -9,7 +9,7 @@ use axum::{
     Router,
 };
 use serde_json::json;
-use nsq_common::{Metrics, Result, NsqError, init_logging, NsqadminConfig};
+use nsq_common::{Metrics, Result, NsqError, NsqadminConfig};
 use tower_http::services::ServeDir;
 
 pub struct NsqadminServer {
@@ -20,9 +20,6 @@ pub struct NsqadminServer {
 impl NsqadminServer {
     /// Create a new NSQAdmin server
     pub fn new(config: NsqadminConfig) -> Result<Self> {
-        // Initialize logging
-        init_logging(&config.base)?;
-        
         // Initialize metrics
         let metrics = Metrics::new(&config.base)?;
         
@@ -209,9 +206,7 @@ impl Clone for NsqadminServer {
     fn clone(&self) -> Self {
         Self {
             config: self.config.clone(),
-            metrics: Metrics::new(&self.config.base).unwrap_or_else(|_| {
-                Metrics::new(&nsq_common::BaseConfig::default()).unwrap()
-            }),
+            metrics: self.metrics.clone(),
         }
     }
 }
