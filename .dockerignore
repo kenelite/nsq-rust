@@ -1,0 +1,54 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+docs/
+README.md
+LICENSE
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Rust
+target/
+Cargo.lock
+
+# Node.js
+nsqadmin-ui/node_modules/
+nsqadmin-ui/dist/
+nsqadmin-ui/.npm
+nsqadmin-ui/.vite
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+
+# Test files
+tests/
+test_*
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Environment files
+.env
+.env.local
+.env.*.local

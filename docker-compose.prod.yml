@@ -1,0 +1,313 @@
+version: '3.8'
+
+services:
+  nsqlookupd-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.nsqlookupd
+    image: nsq-rust-nsqlookupd:latest
+    container_name: nsq-nsqlookupd-1
+    ports:
+      - "4160:4160"
+      - "4161:4161"
+    networks:
+      - nsq-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4161/ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    environment:
+      - RUST_LOG=info
+    volumes:
+      - nsqlookupd-1-data:/var/lib/nsqlookupd
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  nsqlookupd-2:
+    build:
+      context: .
+      dockerfile: Dockerfile.nsqlookupd
+    image: nsq-rust-nsqlookupd:latest
+    container_name: nsq-nsqlookupd-2
+    ports:
+      - "4162:4160"
+      - "4163:4161"
+    networks:
+      - nsq-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4161/ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    environment:
+      - RUST_LOG=info
+    volumes:
+      - nsqlookupd-2-data:/var/lib/nsqlookupd
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  nsqlookupd-3:
+    build:
+      context: .
+      dockerfile: Dockerfile.nsqlookupd
+    image: nsq-rust-nsqlookupd:latest
+    container_name: nsq-nsqlookupd-3
+    ports:
+      - "4164:4160"
+      - "4165:4161"
+    networks:
+      - nsq-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4161/ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    environment:
+      - RUST_LOG=info
+    volumes:
+      - nsqlookupd-3-data:/var/lib/nsqlookupd
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  nsqd-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.nsqd
+    image: nsq-rust-nsqd:latest
+    container_name: nsq-nsqd-1
+    ports:
+      - "4150:4150"
+      - "4151:4151"
+    networks:
+      - nsq-network
+    restart: unless-stopped
+    depends_on:
+      - nsqlookupd-1
+      - nsqlookupd-2
+      - nsqlookupd-3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4151/ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    environment:
+      - RUST_LOG=info
+      - NSQD_TCP_ADDRESS=0.0.0.0:4150
+      - NSQD_HTTP_ADDRESS=0.0.0.0:4151
+      - NSQD_LOOKUPD_TCP_ADDRESS=nsqlookupd-1:4160,nsqlookupd-2:4160,nsqlookupd-3:4160
+      - NSQD_LOOKUPD_HTTP_ADDRESS=nsqlookupd-1:4161,nsqlookupd-2:4161,nsqlookupd-3:4161
+      - NSQD_DATA_PATH=/var/lib/nsqd
+    volumes:
+      - nsqd-1-data:/var/lib/nsqd
+    command: [
+      "nsqd",
+      "--tcp-address=0.0.0.0:4150",
+      "--http-address=0.0.0.0:4151",
+      "--lookupd-tcp-address=nsqlookupd-1:4160",
+      "--lookupd-tcp-address=nsqlookupd-2:4160",
+      "--lookupd-tcp-address=nsqlookupd-3:4160",
+      "--lookupd-http-address=nsqlookupd-1:4161",
+      "--lookupd-http-address=nsqlookupd-2:4161",
+      "--lookupd-http-address=nsqlookupd-3:4161",
+      "--data-path=/var/lib/nsqd"
+    ]
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+
+  nsqd-2:
+    build:
+      context: .
+      dockerfile: Dockerfile.nsqd
+    image: nsq-rust-nsqd:latest
+    container_name: nsq-nsqd-2
+    ports:
+      - "4152:4150"
+      - "4153:4151"
+    networks:
+      - nsq-network
+    restart: unless-stopped
+    depends_on:
+      - nsqlookupd-1
+      - nsqlookupd-2
+      - nsqlookupd-3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4151/ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    environment:
+      - RUST_LOG=info
+      - NSQD_TCP_ADDRESS=0.0.0.0:4150
+      - NSQD_HTTP_ADDRESS=0.0.0.0:4151
+      - NSQD_LOOKUPD_TCP_ADDRESS=nsqlookupd-1:4160,nsqlookupd-2:4160,nsqlookupd-3:4160
+      - NSQD_LOOKUPD_HTTP_ADDRESS=nsqlookupd-1:4161,nsqlookupd-2:4161,nsqlookupd-3:4161
+      - NSQD_DATA_PATH=/var/lib/nsqd
+    volumes:
+      - nsqd-2-data:/var/lib/nsqd
+    command: [
+      "nsqd",
+      "--tcp-address=0.0.0.0:4150",
+      "--http-address=0.0.0.0:4151",
+      "--lookupd-tcp-address=nsqlookupd-1:4160",
+      "--lookupd-tcp-address=nsqlookupd-2:4160",
+      "--lookupd-tcp-address=nsqlookupd-3:4160",
+      "--lookupd-http-address=nsqlookupd-1:4161",
+      "--lookupd-http-address=nsqlookupd-2:4161",
+      "--lookupd-http-address=nsqlookupd-3:4161",
+      "--data-path=/var/lib/nsqd"
+    ]
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+
+  nsqd-3:
+    build:
+      context: .
+      dockerfile: Dockerfile.nsqd
+    image: nsq-rust-nsqd:latest
+    container_name: nsq-nsqd-3
+    ports:
+      - "4154:4150"
+      - "4155:4151"
+    networks:
+      - nsq-network
+    restart: unless-stopped
+    depends_on:
+      - nsqlookupd-1
+      - nsqlookupd-2
+      - nsqlookupd-3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4151/ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    environment:
+      - RUST_LOG=info
+      - NSQD_TCP_ADDRESS=0.0.0.0:4150
+      - NSQD_HTTP_ADDRESS=0.0.0.0:4151
+      - NSQD_LOOKUPD_TCP_ADDRESS=nsqlookupd-1:4160,nsqlookupd-2:4160,nsqlookupd-3:4160
+      - NSQD_LOOKUPD_HTTP_ADDRESS=nsqlookupd-1:4161,nsqlookupd-2:4161,nsqlookupd-3:4161
+      - NSQD_DATA_PATH=/var/lib/nsqd
+    volumes:
+      - nsqd-3-data:/var/lib/nsqd
+    command: [
+      "nsqd",
+      "--tcp-address=0.0.0.0:4150",
+      "--http-address=0.0.0.0:4151",
+      "--lookupd-tcp-address=nsqlookupd-1:4160",
+      "--lookupd-tcp-address=nsqlookupd-2:4160",
+      "--lookupd-tcp-address=nsqlookupd-3:4160",
+      "--lookupd-http-address=nsqlookupd-1:4161",
+      "--lookupd-http-address=nsqlookupd-2:4161",
+      "--lookupd-http-address=nsqlookupd-3:4161",
+      "--data-path=/var/lib/nsqd"
+    ]
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+
+  nsqadmin:
+    build:
+      context: .
+      dockerfile: Dockerfile.nsqadmin
+    image: nsq-rust-nsqadmin:latest
+    container_name: nsq-nsqadmin-prod
+    ports:
+      - "4171:4171"
+    networks:
+      - nsq-network
+    restart: unless-stopped
+    depends_on:
+      - nsqlookupd-1
+      - nsqlookupd-2
+      - nsqlookupd-3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4171/ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    environment:
+      - RUST_LOG=info
+      - NSQADMIN_HTTP_ADDRESS=0.0.0.0:4171
+      - NSQADMIN_LOOKUPD_HTTP_ADDRESS=nsqlookupd-1:4161,nsqlookupd-2:4161,nsqlookupd-3:4161
+    command: [
+      "nsqadmin",
+      "--http-address=0.0.0.0:4171",
+      "--lookupd-http-address=nsqlookupd-1:4161",
+      "--lookupd-http-address=nsqlookupd-2:4161",
+      "--lookupd-http-address=nsqlookupd-3:4161"
+    ]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+volumes:
+  nsqlookupd-1-data:
+    driver: local
+  nsqlookupd-2-data:
+    driver: local
+  nsqlookupd-3-data:
+    driver: local
+  nsqd-1-data:
+    driver: local
+  nsqd-2-data:
+    driver: local
+  nsqd-3-data:
+    driver: local
+
+networks:
+  nsq-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

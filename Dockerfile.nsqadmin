@@ -1,0 +1,56 @@
+# NSQAdmin-specific Dockerfile
+FROM rust:1.75-slim as builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy workspace files
+COPY Cargo.toml Cargo.lock ./
+COPY nsq-protocol/ ./nsq-protocol/
+COPY nsq-common/ ./nsq-common/
+COPY nsqadmin/ ./nsqadmin/
+
+# Build NSQAdmin
+RUN cargo build --release -p nsqadmin
+
+# Runtime stage
+FROM debian:bookworm-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create nsq user
+RUN useradd -r -s /bin/false nsq
+
+# Copy binary from builder stage
+COPY --from=builder /app/target/release/nsqadmin /usr/local/bin/
+
+# Copy UI files
+COPY nsqadmin-ui/dist/ /usr/local/share/nsqadmin-ui/
+
+# Set permissions
+RUN chmod +x /usr/local/bin/nsqadmin
+
+# Switch to nsq user
+USER nsq
+
+# Expose ports
+EXPOSE 4171
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:4171/ping || exit 1
+
+# Default command
+CMD ["nsqadmin", "--http-address=0.0.0.0:4171"]
