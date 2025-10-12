@@ -1,11 +1,11 @@
 //! Message format compatibility tests
 
-use crate::integration::test_utils::{TestEnvironment, TestConfig};
+use crate::test_utils::{TestEnvironment, TestConfig};
 
 #[tokio::test]
 async fn test_message_format_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -21,7 +21,7 @@ async fn test_message_format_compatibility() {
         "Message with newlines:\nLine 1\nLine 2",
         "Message with tabs:\tTabbed\tcontent",
         "Empty message",
-        "Very long message: ".repeat(1000),
+        &"Very long message: ".repeat(1000),
         "Message with quotes: \"Hello, World!\"",
         "Message with backslashes: \\path\\to\\file",
         "Message with brackets: [item1, item2, item3]",
@@ -57,7 +57,7 @@ async fn test_message_format_compatibility() {
 #[tokio::test]
 async fn test_message_encoding_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -96,7 +96,7 @@ async fn test_message_encoding_compatibility() {
 #[tokio::test]
 async fn test_message_size_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -145,7 +145,7 @@ async fn test_message_size_compatibility() {
 #[tokio::test]
 async fn test_message_content_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -189,7 +189,7 @@ async fn test_message_content_compatibility() {
 #[tokio::test]
 async fn test_message_ordering_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -226,7 +226,7 @@ async fn test_message_ordering_compatibility() {
 #[tokio::test]
 async fn test_message_duplication_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -255,7 +255,7 @@ async fn test_message_duplication_compatibility() {
 #[tokio::test]
 async fn test_message_persistence_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();

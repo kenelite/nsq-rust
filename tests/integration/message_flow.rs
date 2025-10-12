@@ -9,7 +9,7 @@ use std::time::Duration;
 #[tokio::test]
 async fn test_tcp_protocol_basic() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     // Connect to NSQd TCP port
@@ -33,7 +33,7 @@ async fn test_tcp_protocol_basic() {
 #[tokio::test]
 async fn test_tcp_subscribe_unsubscribe() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -87,7 +87,7 @@ async fn test_tcp_subscribe_unsubscribe() {
 #[tokio::test]
 async fn test_http_publish_multiple() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -117,7 +117,7 @@ async fn test_http_publish_multiple() {
 #[tokio::test]
 async fn test_message_ordering() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -150,7 +150,7 @@ async fn test_message_ordering() {
 #[tokio::test]
 async fn test_channel_isolation() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -182,7 +182,7 @@ async fn test_channel_isolation() {
 #[tokio::test]
 async fn test_message_persistence() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -216,7 +216,7 @@ async fn test_message_persistence() {
 #[tokio::test]
 async fn test_large_message_handling() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -239,7 +239,7 @@ async fn test_large_message_handling() {
 #[tokio::test]
 async fn test_concurrent_publishing() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();

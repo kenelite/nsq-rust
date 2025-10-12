@@ -5,7 +5,7 @@ use crate::test_utils::{TestEnvironment, TestConfig};
 #[tokio::test]
 async fn test_invalid_topic_names() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -68,7 +68,7 @@ async fn test_invalid_topic_names() {
 #[tokio::test]
 async fn test_invalid_channel_names() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -120,7 +120,7 @@ async fn test_invalid_channel_names() {
 #[tokio::test]
 async fn test_nonexistent_topic_operations() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -144,7 +144,7 @@ async fn test_nonexistent_topic_operations() {
 #[tokio::test]
 async fn test_nonexistent_channel_operations() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -171,7 +171,7 @@ async fn test_nonexistent_channel_operations() {
 #[tokio::test]
 async fn test_large_message_handling() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -207,7 +207,7 @@ async fn test_large_message_handling() {
 #[tokio::test]
 async fn test_malformed_requests() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let client = reqwest::Client::new();
@@ -243,7 +243,7 @@ async fn test_malformed_requests() {
 #[tokio::test]
 async fn test_concurrent_error_conditions() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -295,7 +295,7 @@ async fn test_concurrent_error_conditions() {
 #[tokio::test]
 async fn test_service_unavailability() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -322,7 +322,7 @@ async fn test_service_unavailability() {
 #[tokio::test]
 async fn test_resource_exhaustion() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();

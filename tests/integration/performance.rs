@@ -6,7 +6,7 @@ use std::time::Instant;
 #[tokio::test]
 async fn test_message_throughput() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -44,7 +44,7 @@ async fn test_message_throughput() {
 #[tokio::test]
 async fn test_concurrent_publishing() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -97,7 +97,7 @@ async fn test_concurrent_publishing() {
 #[tokio::test]
 async fn test_large_message_performance() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -128,7 +128,7 @@ async fn test_large_message_performance() {
 #[tokio::test]
 async fn test_memory_usage() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -176,7 +176,7 @@ async fn test_memory_usage() {
 #[tokio::test]
 async fn test_api_response_times() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -211,7 +211,7 @@ async fn test_api_response_times() {
 #[tokio::test]
 async fn test_concurrent_api_requests() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -252,7 +252,7 @@ async fn test_concurrent_api_requests() {
 #[tokio::test]
 async fn test_topic_creation_performance() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();

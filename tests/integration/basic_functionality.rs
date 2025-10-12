@@ -6,7 +6,7 @@ use crate::test_utils::assertions::*;
 #[tokio::test]
 async fn test_service_startup() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     
     // Start all services
     env.start().await.expect("Failed to start services");
@@ -30,7 +30,7 @@ async fn test_service_startup() {
 #[tokio::test]
 async fn test_stats_endpoints() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -57,7 +57,7 @@ async fn test_stats_endpoints() {
 #[tokio::test]
 async fn test_topic_creation() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -80,7 +80,7 @@ async fn test_topic_creation() {
 #[tokio::test]
 async fn test_message_publishing() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -111,7 +111,7 @@ async fn test_message_publishing() {
 #[tokio::test]
 async fn test_topic_pause_unpause() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -149,7 +149,7 @@ async fn test_topic_pause_unpause() {
 #[tokio::test]
 async fn test_topic_deletion() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -178,7 +178,7 @@ async fn test_topic_deletion() {
 #[tokio::test]
 async fn test_admin_interface() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let admin_client = env.admin_client();
@@ -201,7 +201,7 @@ async fn test_admin_interface() {
 #[tokio::test]
 async fn test_error_handling() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
