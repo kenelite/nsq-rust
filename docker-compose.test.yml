@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  nsqlookupd:
+    build:
+      context: .
+      dockerfile: Dockerfile.nsqlookupd
+    image: nsq-rust-nsqlookupd:test
+    container_name: nsq-nsqlookupd-test
+    ports:
+      - "4160:4160"
+      - "4161:4161"
+    networks:
+      - nsq-network
+    restart: "no"
+    environment:
+      - RUST_LOG=debug
+    volumes:
+      - nsqlookupd-test-data:/var/lib/nsqlookupd
+    command: [
+      "nsqlookupd",
+      "--tcp-address=0.0.0.0:4160",
+      "--http-address=0.0.0.0:4161",
+      "--log-level=debug"
+    ]
+
+  nsqd:
+    build:
+      context: .
+      dockerfile: Dockerfile.nsqd
+    image: nsq-rust-nsqd:test
+    container_name: nsq-nsqd-test
+    ports:
+      - "4150:4150"
+      - "4151:4151"
+    networks:
+      - nsq-network
+    restart: "no"
+    depends_on:
+      - nsqlookupd
+    environment:
+      - RUST_LOG=debug
+      - NSQD_TCP_ADDRESS=0.0.0.0:4150
+      - NSQD_HTTP_ADDRESS=0.0.0.0:4151
+      - NSQD_LOOKUPD_TCP_ADDRESS=nsqlookupd:4160
+      - NSQD_LOOKUPD_HTTP_ADDRESS=nsqlookupd:4161
+      - NSQD_DATA_PATH=/var/lib/nsqd
+    volumes:
+      - nsqd-test-data:/var/lib/nsqd
+    command: [
+      "nsqd",
+      "--tcp-address=0.0.0.0:4150",
+      "--http-address=0.0.0.0:4151",
+      "--lookupd-tcp-address=nsqlookupd:4160",
+      "--lookupd-http-address=nsqlookupd:4161",
+      "--data-path=/var/lib/nsqd",
+      "--log-level=debug"
+    ]
+
+  nsqadmin:
+    build:
+      context: .
+      dockerfile: Dockerfile.nsqadmin
+    image: nsq-rust-nsqadmin:test
+    container_name: nsq-nsqadmin-test
+    ports:
+      - "4171:4171"
+    networks:
+      - nsq-network
+    restart: "no"
+    depends_on:
+      - nsqlookupd
+    environment:
+      - RUST_LOG=debug
+      - NSQADMIN_HTTP_ADDRESS=0.0.0.0:4171
+      - NSQADMIN_LOOKUPD_HTTP_ADDRESS=nsqlookupd:4161
+    command: [
+      "nsqadmin",
+      "--http-address=0.0.0.0:4171",
+      "--lookupd-http-address=nsqlookupd:4161",
+      "--log-level=debug"
+    ]
+
+  # Test runner service
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    image: nsq-rust-test:latest
+    container_name: nsq-test-runner
+    networks:
+      - nsq-network
+    depends_on:
+      - nsqlookupd
+      - nsqd
+      - nsqadmin
+    environment:
+      - RUST_LOG=debug
+      - NSQD_HTTP_ADDRESS=nsqd:4151
+      - NSQLOOKUPD_HTTP_ADDRESS=nsqlookupd:4161
+      - NSQADMIN_HTTP_ADDRESS=nsqadmin:4171
+    volumes:
+      - ./tests:/app/tests:ro
+      - ./Cargo.toml:/app/Cargo.toml:ro
+      - ./Cargo.lock:/app/Cargo.lock:ro
+    command: [
+      "cargo", "test", "--test", "integration"
+    ]
+
+volumes:
+  nsqlookupd-test-data:
+    driver: local
+  nsqd-test-data:
+    driver: local
+
+networks:
+  nsq-network:
+    driver: bridge
