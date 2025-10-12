@@ -15,7 +15,7 @@ pub struct DiskQueue {
     path: PathBuf,
     max_file_size: usize,
     max_msg_size: usize,
-    sync_timeout: std::time::Duration,
+    _sync_timeout: std::time::Duration,
     
     // Current file handles
     read_file: Arc<RwLock<Option<File>>>,
@@ -52,7 +52,7 @@ impl DiskQueue {
             path,
             max_file_size,
             max_msg_size,
-            sync_timeout,
+            _sync_timeout: sync_timeout,
             read_file: Arc::new(RwLock::new(None)),
             write_file: Arc::new(RwLock::new(None)),
             read_pos: Arc::new(RwLock::new(0)),
