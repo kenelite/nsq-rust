@@ -5,7 +5,7 @@ use crate::test_utils::{TestEnvironment, TestConfig};
 #[tokio::test]
 async fn test_admin_api_endpoints() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let admin_client = env.admin_client();
@@ -33,7 +33,7 @@ async fn test_admin_api_endpoints() {
 #[tokio::test]
 async fn test_admin_topic_management() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -68,7 +68,7 @@ async fn test_admin_topic_management() {
 #[tokio::test]
 async fn test_admin_node_monitoring() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let admin_client = env.admin_client();
@@ -94,7 +94,7 @@ async fn test_admin_node_monitoring() {
 #[tokio::test]
 async fn test_admin_statistics_aggregation() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -148,7 +148,7 @@ async fn test_admin_statistics_aggregation() {
 #[tokio::test]
 async fn test_admin_error_handling() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let admin_client = env.admin_client();
@@ -174,7 +174,7 @@ async fn test_admin_error_handling() {
 #[tokio::test]
 async fn test_admin_web_interface() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let admin_client = env.admin_client();
@@ -205,7 +205,7 @@ async fn test_admin_web_interface() {
 #[tokio::test]
 async fn test_admin_performance() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let admin_client = env.admin_client();

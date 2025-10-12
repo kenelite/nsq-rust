@@ -1,6 +1,6 @@
 //! Wire protocol compatibility tests
 
-use crate::integration::test_utils::{TestEnvironment, TestConfig};
+use crate::test_utils::{TestEnvironment, TestConfig};
 use tokio::net::TcpStream;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use std::time::Duration;
@@ -8,7 +8,7 @@ use std::time::Duration;
 #[tokio::test]
 async fn test_wire_protocol_commands() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let mut stream = TcpStream::connect(format!("127.0.0.1:{}", config.nsqd_tcp_port))
@@ -58,7 +58,7 @@ async fn test_wire_protocol_commands() {
 #[tokio::test]
 async fn test_wire_protocol_message_format() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -108,7 +108,7 @@ async fn test_wire_protocol_message_format() {
 #[tokio::test]
 async fn test_wire_protocol_error_handling() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let mut stream = TcpStream::connect(format!("127.0.0.1:{}", config.nsqd_tcp_port))
@@ -144,7 +144,7 @@ async fn test_wire_protocol_error_handling() {
 #[tokio::test]
 async fn test_wire_protocol_connection_lifecycle() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     // Test connection establishment
@@ -183,7 +183,7 @@ async fn test_wire_protocol_connection_lifecycle() {
 #[tokio::test]
 async fn test_wire_protocol_concurrent_connections() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     // Test multiple concurrent connections
@@ -229,7 +229,7 @@ async fn test_wire_protocol_concurrent_connections() {
 #[tokio::test]
 async fn test_wire_protocol_message_ordering() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -298,7 +298,7 @@ async fn test_wire_protocol_message_ordering() {
 #[tokio::test]
 async fn test_wire_protocol_large_messages() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();

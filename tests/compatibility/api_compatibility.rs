@@ -1,11 +1,11 @@
 //! API compatibility tests with original NSQ
 
-use crate::integration::test_utils::{TestEnvironment, TestConfig};
+use crate::test_utils::{TestEnvironment, TestConfig};
 
 #[tokio::test]
 async fn test_nsqd_http_api_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -49,7 +49,7 @@ async fn test_nsqd_http_api_compatibility() {
 #[tokio::test]
 async fn test_lookupd_http_api_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let lookupd_client = env.lookupd_client();
@@ -91,7 +91,7 @@ async fn test_lookupd_http_api_compatibility() {
 #[tokio::test]
 async fn test_admin_http_api_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let admin_client = env.admin_client();
@@ -121,7 +121,7 @@ async fn test_admin_http_api_compatibility() {
 #[tokio::test]
 async fn test_api_response_format_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -180,7 +180,7 @@ async fn test_api_response_format_compatibility() {
 #[tokio::test]
 async fn test_api_error_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -205,7 +205,7 @@ async fn test_api_error_compatibility() {
 #[tokio::test]
 async fn test_api_method_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let client = reqwest::Client::new();
@@ -240,7 +240,7 @@ async fn test_api_method_compatibility() {
 #[tokio::test]
 async fn test_api_parameter_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let client = reqwest::Client::new();
@@ -279,7 +279,7 @@ async fn test_api_parameter_compatibility() {
 #[tokio::test]
 async fn test_api_content_type_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let client = reqwest::Client::new();
@@ -308,7 +308,7 @@ async fn test_api_content_type_compatibility() {
 #[tokio::test]
 async fn test_api_timeout_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();

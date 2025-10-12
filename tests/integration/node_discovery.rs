@@ -6,7 +6,7 @@ use crate::test_utils::assertions::*;
 #[tokio::test]
 async fn test_lookupd_registration() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let lookupd_client = env.lookupd_client();
@@ -33,7 +33,7 @@ async fn test_lookupd_registration() {
 #[tokio::test]
 async fn test_topic_registration() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -65,7 +65,7 @@ async fn test_topic_registration() {
 #[tokio::test]
 async fn test_producer_discovery() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let lookupd_client = env.lookupd_client();
@@ -94,7 +94,7 @@ async fn test_producer_discovery() {
 #[tokio::test]
 async fn test_topic_discovery() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -137,7 +137,7 @@ async fn test_topic_discovery() {
 #[tokio::test]
 async fn test_service_health_monitoring() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -168,7 +168,7 @@ async fn test_service_health_monitoring() {
 #[tokio::test]
 async fn test_service_restart_discovery() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -205,7 +205,7 @@ async fn test_service_restart_discovery() {
 #[tokio::test]
 async fn test_multiple_producer_registration() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let lookupd_client = env.lookupd_client();
@@ -238,7 +238,7 @@ async fn test_multiple_producer_registration() {
 #[tokio::test]
 async fn test_lookupd_api_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let lookupd_client = env.lookupd_client();

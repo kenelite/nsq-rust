@@ -1,6 +1,6 @@
 //! Protocol compatibility tests with original NSQ
 
-use crate::integration::test_utils::{TestEnvironment, TestConfig};
+use crate::test_utils::{TestEnvironment, TestConfig};
 use tokio::net::TcpStream;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use std::time::Duration;
@@ -8,7 +8,7 @@ use std::time::Duration;
 #[tokio::test]
 async fn test_tcp_protocol_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     // Test basic TCP protocol compatibility
@@ -58,7 +58,7 @@ async fn test_tcp_protocol_compatibility() {
 #[tokio::test]
 async fn test_http_api_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -100,7 +100,7 @@ async fn test_http_api_compatibility() {
 #[tokio::test]
 async fn test_message_format_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -116,7 +116,7 @@ async fn test_message_format_compatibility() {
         "Message with newlines:\nLine 1\nLine 2",
         "Message with tabs:\tTabbed\tcontent",
         "Empty message",
-        "Very long message: ".repeat(1000),
+        &"Very long message: ".repeat(1000),
     ];
     
     for (i, message) in test_messages.iter().enumerate() {
@@ -136,7 +136,7 @@ async fn test_message_format_compatibility() {
 #[tokio::test]
 async fn test_wire_protocol_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     // Test wire protocol compatibility
@@ -187,7 +187,7 @@ async fn test_wire_protocol_compatibility() {
 #[tokio::test]
 async fn test_api_response_format_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -230,7 +230,7 @@ async fn test_api_response_format_compatibility() {
 #[tokio::test]
 async fn test_error_response_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();
@@ -253,7 +253,7 @@ async fn test_error_response_compatibility() {
 #[tokio::test]
 async fn test_concurrent_protocol_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     // Test concurrent TCP connections
@@ -295,7 +295,7 @@ async fn test_concurrent_protocol_compatibility() {
 #[tokio::test]
 async fn test_protocol_version_compatibility() {
     let config = TestConfig::default();
-    let mut env = TestEnvironment::new(config);
+    let mut env = TestEnvironment::new(config.clone());
     env.start().await.expect("Failed to start services");
     
     let nsqd_client = env.nsqd_client();

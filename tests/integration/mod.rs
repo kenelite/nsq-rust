@@ -1,5 +1,6 @@
 //! Integration tests for NSQ Rust implementation
 
+mod test_utils;
 
 mod basic_functionality;
 mod message_flow;
