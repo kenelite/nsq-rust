@@ -10,18 +10,16 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::time::interval;
 use tokio_util::codec::Framed;
 use axum::{
-    extract::{Path, State},
     response::Json,
     routing::{get, post},
     Router,
 };
-use serde_json::Value;
 use nsq_protocol::{NsqDecoder};
-use nsq_common::{Metrics, Result, NsqError, init_logging};
+use nsq_common::{Metrics, Result, NsqError};
 use crate::config::NsqdConfig;
 use crate::topic::Topic;
 use crate::client::{Client, ClientInfo};
-use crate::stats::{StatsCollector, NsqdStats};
+use crate::stats::StatsCollector;
 
 /// NSQd server
 pub struct NsqdServer {
@@ -46,9 +44,6 @@ pub struct NsqdServer {
 impl NsqdServer {
     /// Create a new NSQd server
     pub fn new(config: NsqdConfig) -> Result<Self> {
-        // Initialize logging
-        init_logging(&config.base)?;
-        
         // Initialize metrics
         let metrics = Metrics::new(&config.base)?;
         
