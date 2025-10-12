@@ -14,6 +14,7 @@ async fn test_message_format_compatibility() {
     nsqd_client.create_topic("format-compat-test").await.expect("Failed to create topic");
     
     // Test different message formats
+    let long_message = "Very long message: ".repeat(1000);
     let test_messages = vec![
         "Simple text message",
         "Message with special chars: !@#$%^&*()",
@@ -21,7 +22,7 @@ async fn test_message_format_compatibility() {
         "Message with newlines:\nLine 1\nLine 2",
         "Message with tabs:\tTabbed\tcontent",
         "Empty message",
-        &"Very long message: ".repeat(1000),
+        &long_message,
         "Message with quotes: \"Hello, World!\"",
         "Message with backslashes: \\path\\to\\file",
         "Message with brackets: [item1, item2, item3]",
@@ -118,16 +119,18 @@ async fn test_message_size_compatibility() {
         let message = "x".repeat(*size);
         let result = nsqd_client.publish("size-compat-test", &message).await;
         
-        match result {
+        let success = match &result {
             Ok(response) => {
                 assert_eq!(response, "OK");
                 println!("Successfully published {} byte message", size);
+                true
             }
             Err(e) => {
                 println!("Failed to publish {} byte message: {}", size, e);
                 // Large message rejection is acceptable
+                false
             }
-        }
+        };
         
         // Verify message count increased if successful
         let stats = nsqd_client.get_stats().await.expect("Failed to get stats");
@@ -136,7 +139,7 @@ async fn test_message_size_compatibility() {
             .expect("Topic should exist");
         let message_count = topic["message_count"].as_u64().expect("message_count should be a number");
         
-        if result.is_ok() {
+        if success {
             assert_eq!(message_count, (i + 1) as u64);
         }
     }

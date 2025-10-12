@@ -109,6 +109,7 @@ async fn test_message_format_compatibility() {
     nsqd_client.create_topic("format-test").await.expect("Failed to create topic");
     
     // Test different message formats
+    let long_message = "Very long message: ".repeat(1000);
     let test_messages = vec![
         "Simple text message",
         "Message with special chars: !@#$%^&*()",
@@ -116,7 +117,7 @@ async fn test_message_format_compatibility() {
         "Message with newlines:\nLine 1\nLine 2",
         "Message with tabs:\tTabbed\tcontent",
         "Empty message",
-        &"Very long message: ".repeat(1000),
+        &long_message,
     ];
     
     for (i, message) in test_messages.iter().enumerate() {
