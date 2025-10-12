@@ -11,7 +11,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use parking_lot::RwLock;
-use nsq_common::{Metrics, Result, NsqError, init_logging, NsqlookupdConfig};
+use nsq_common::{Metrics, Result, NsqError, NsqlookupdConfig};
 
 /// Producer registration information
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -71,9 +71,6 @@ pub struct NsqlookupdServer {
 impl NsqlookupdServer {
     /// Create a new NSQLookupd server
     pub fn new(config: NsqlookupdConfig) -> Result<Self> {
-        // Initialize logging
-        init_logging(&config.base)?;
-        
         // Initialize metrics
         let metrics = Metrics::new(&config.base)?;
         
