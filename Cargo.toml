@@ -1,0 +1,58 @@
+[workspace]
+members = [
+    "nsq-protocol",
+    "nsq-common",
+    "nsqd",
+    "nsqlookupd",
+    "nsqadmin",
+    "tools/nsq_to_file",
+    "tools/to_nsq",
+    "tools/nsq_tail",
+    "tools/nsq_stat",
+    "tools/nsq_to_http",
+    "tools/nsq_to_nsq",
+    "tests",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+version = "1.3.0"
+authors = ["NSQ Rust Contributors"]
+description = "NSQ Rust Implementation"
+license = "MIT"
+repository = "https://github.com/kenelite/nsq-rust"
+
+[workspace.dependencies]
+tokio = { version = "1.47.1", features = ["full"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+config = { version = "0.14.0", features = ["toml", "yaml", "json"] }
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
+statsd = "0.13.1"
+uuid = { version = "1.10.0", features = ["v4", "serde"] }
+memmap2 = "0.9.4"
+bytes = "1.6.1"
+thiserror = "1.0.69"
+anyhow = "1.0.86"
+chrono = { version = "0.4.38", features = ["serde"] }
+dashmap = "5.5.3"
+parking_lot = "0.12.1"
+crossbeam-channel = "0.5.13"
+regex = "1.0"
+lazy_static = "1.0"
+clap = { version = "4.5.11", features = ["derive"] }
+axum = { version = "0.7.5", features = ["macros"] }
+tokio-util = { version = "0.7.16", features = ["codec"] }
+reqwest = { version = "0.11.25", features = ["json"] }
+tower-http = { version = "0.5.1", features = ["fs"] }
+flate2 = "1.0.28"
+snap = "1.0.5"
+tokio-stream = "0.1.14"
+async-trait = "0.1.73"
+futures = "0.3.28"
+rustls = "0.21.7"
+tokio-rustls = "0.24.1"
+rustls-pemfile = "1.0.3"
+url = "2.4.1"

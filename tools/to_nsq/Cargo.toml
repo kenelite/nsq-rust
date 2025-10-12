@@ -1,0 +1,23 @@
+[package]
+name = "to_nsq"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "NSQ producer that reads from stdin/files"
+
+[[bin]]
+name = "to_nsq"
+path = "src/main.rs"
+
+[dependencies]
+nsq-protocol = { path = "../../nsq-protocol" }
+nsq-common = { path = "../../nsq-common" }
+tokio = { workspace = true }
+clap = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+bytes = { workspace = true }

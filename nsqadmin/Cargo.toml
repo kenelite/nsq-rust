@@ -1,0 +1,32 @@
+[package]
+name = "nsqadmin"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "NSQ admin web interface backend"
+
+[[bin]]
+name = "nsqadmin"
+path = "src/main.rs"
+
+[dependencies]
+nsq-common = { path = "../nsq-common" }
+tokio = { workspace = true }
+axum = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+clap = { workspace = true }
+tower-http = { version = "0.5.1", features = ["fs"] }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+tokio-util = { workspace = true }
+tokio-stream = { workspace = true }
+url = { workspace = true }
+chrono = { workspace = true }
+dashmap = { workspace = true }
+parking_lot = { workspace = true }
+crossbeam-channel = { workspace = true }

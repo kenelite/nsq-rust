@@ -1,0 +1,33 @@
+[package]
+name = "nsq-integration-tests"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Integration and compatibility tests for NSQ Rust"
+
+[[test]]
+name = "integration"
+path = "integration/mod.rs"
+
+[[test]]
+name = "compatibility"
+path = "compatibility/mod.rs"
+
+[dependencies]
+nsq-protocol = { path = "../nsq-protocol" }
+nsq-common = { path = "../nsq-common" }
+nsqd = { path = "../nsqd" }
+nsqlookupd = { path = "../nsqlookupd" }
+nsqadmin = { path = "../nsqadmin" }
+tokio = { workspace = true }
+reqwest = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+bytes = { workspace = true }

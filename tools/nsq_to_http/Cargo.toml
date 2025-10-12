@@ -1,0 +1,25 @@
+[package]
+name = "nsq_to_http"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "NSQ consumer that posts messages to HTTP endpoints"
+
+[[bin]]
+name = "nsq_to_http"
+path = "src/main.rs"
+
+[dependencies]
+nsq-protocol = { path = "../../nsq-protocol" }
+nsq-common = { path = "../../nsq-common" }
+tokio = { workspace = true }
+axum = { workspace = true }
+clap = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+bytes = { workspace = true }
+url = { workspace = true }
