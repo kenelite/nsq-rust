@@ -6,6 +6,7 @@ import { Topics } from './components/Topics'
 import { Nodes } from './components/Nodes'
 import { Settings } from './components/Settings'
 import { Channels } from './components/Channels'
+import { Performance } from './components/Performance'
 import { useAppStore } from './stores/useAppStore'
 
 function App() {
@@ -26,7 +27,7 @@ function App() {
         <Route path="topics" element={<Topics />} />
         <Route path="nodes" element={<Nodes />} />
         <Route path="channels" element={<Channels />} />
-        <Route path="performance" element={<div className="text-center py-12"><h2 className="text-xl font-semibold">Performance - Coming Soon</h2></div>} />
+        <Route path="performance" element={<Performance />} />
         <Route path="settings" element={<Settings />} />
       </Route>
     </Routes>
