@@ -15,6 +15,9 @@ use tower_http::services::ServeDir;
 pub struct NsqadminServer {
     config: NsqadminConfig,
     metrics: Metrics,
+    http_client: reqwest::Client,
+    start_time: chrono::DateTime<chrono::Utc>,
+    start_instant: std::time::Instant,
 }
 
 impl NsqadminServer {
@@ -22,10 +25,14 @@ impl NsqadminServer {
     pub fn new(config: NsqadminConfig) -> Result<Self> {
         // Initialize metrics
         let metrics = Metrics::new(&config.base)?;
+        let http_client = reqwest::Client::new();
         
         Ok(Self {
             config,
             metrics,
+            http_client,
+            start_time: chrono::Utc::now(),
+            start_instant: std::time::Instant::now(),
         })
     }
     
@@ -90,73 +97,100 @@ impl NsqadminServer {
     }
     
     /// Handle stats endpoint
-    async fn handle_stats(State(_server): State<Arc<NsqadminServer>>) -> Json<serde_json::Value> {
-        // Mock stats for demonstration
+    async fn handle_stats(State(server): State<Arc<NsqadminServer>>) -> Json<serde_json::Value> {
+        // Compute uptime
+        let uptime_seconds = server.start_instant.elapsed().as_secs();
+        let hours = uptime_seconds / 3600;
+        let minutes = (uptime_seconds % 3600) / 60;
+        let seconds = uptime_seconds % 60;
+        let uptime_display = format!("{}h {}m {}s", hours, minutes, seconds);
+
+        // Aggregate topics and nodes from lookupd (best-effort)
+        let topics = server.fetch_lookupd_topics().await.unwrap_or_default();
+        let producers = server.fetch_lookupd_nodes().await.unwrap_or_default();
+
+        // Present minimal compatible shapes
         Json(json!({
             "version": env!("CARGO_PKG_VERSION"),
             "health": "ok",
-            "start_time": chrono::Utc::now().timestamp(),
-            "uptime": "1h 23m 45s",
-            "uptime_seconds": 5025,
-            "producers": [
-                {
-                    "remote_address": "127.0.0.1:4150",
-                    "hostname": "localhost",
-                    "broadcast_address": "127.0.0.1",
-                    "tcp_port": 4150,
-                    "http_port": 4151,
-                    "version": "1.3.0",
-                    "last_update": chrono::Utc::now().to_rfc3339()
-                }
-            ],
-            "topics": [
-                {
-                    "topic_name": "test-topic",
-                    "channels": [
-                        {
-                            "channel_name": "test-channel",
-                            "depth": 0,
-                            "backend_depth": 0,
-                            "in_flight_count": 0,
-                            "deferred_count": 0,
-                            "message_count": 0,
-                            "requeue_count": 0,
-                            "timeout_count": 0,
-                            "clients": [],
-                            "paused": false
-                        }
-                    ],
-                    "depth": 0,
-                    "backend_depth": 0,
-                    "message_count": 0,
-                    "paused": false
-                }
-            ]
+            "start_time": server.start_time.timestamp(),
+            "uptime": uptime_display,
+            "uptime_seconds": uptime_seconds,
+            "producers": producers,
+            "topics": topics.into_iter().map(|t| json!({
+                "topic_name": t,
+                "channels": [],
+                "depth": 0,
+                "backend_depth": 0,
+                "message_count": 0,
+                "paused": false
+            })).collect::<Vec<_>>()
         }))
     }
     
     /// Handle topics endpoint
-    async fn handle_topics() -> Json<serde_json::Value> {
+    async fn handle_topics(State(server): State<Arc<NsqadminServer>>) -> Json<serde_json::Value> {
+        let topics = server.fetch_lookupd_topics().await.unwrap_or_default();
         Json(json!({
-            "topics": ["test-topic", "metrics", "logs"]
+            "topics": topics
         }))
     }
     
     /// Handle nodes endpoint
-    async fn handle_nodes() -> Json<serde_json::Value> {
+    async fn handle_nodes(State(server): State<Arc<NsqadminServer>>) -> Json<serde_json::Value> {
+        let producers = server.fetch_lookupd_nodes().await.unwrap_or_default();
         Json(json!({
-            "producers": [
-                {
-                    "remote_address": "127.0.0.1:4150",
-                    "hostname": "localhost",
-                    "broadcast_address": "127.0.0.1",
-                    "tcp_port": 4150,
-                    "http_port": 4151,
-                    "version": "1.3.0",
-                    "last_update": chrono::Utc::now().to_rfc3339()
-                }
-            ]
+            "producers": producers
         }))
+    }
+
+    // --- helpers ---
+    fn normalize_address(addr: &str) -> String {
+        if addr.starts_with("http://") || addr.starts_with("https://") {
+            addr.to_string()
+        } else {
+            format!("http://{}", addr)
+        }
+    }
+
+    async fn fetch_lookupd_topics(&self) -> std::result::Result<Vec<String>, reqwest::Error> {
+        let mut all_topics: Vec<String> = Vec::new();
+        for addr in &self.config.lookupd_http_addresses {
+            let base = Self::normalize_address(addr);
+            let url = format!("{}/topics", base);
+            if let Ok(resp) = self.http_client.get(&url).send().await {
+                if let Ok(json) = resp.json::<serde_json::Value>().await {
+                    if let Some(arr) = json.get("topics").and_then(|v| v.as_array()) {
+                        for t in arr {
+                            if let Some(name) = t.as_str() {
+                                if !all_topics.iter().any(|x| x == name) {
+                                    all_topics.push(name.to_string());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Ok(all_topics)
+    }
+
+    async fn fetch_lookupd_nodes(&self) -> std::result::Result<Vec<serde_json::Value>, reqwest::Error> {
+        let mut producers: Vec<serde_json::Value> = Vec::new();
+        for addr in &self.config.lookupd_http_addresses {
+            let base = Self::normalize_address(addr);
+            let url = format!("{}/nodes", base);
+            if let Ok(resp) = self.http_client.get(&url).send().await {
+                if let Ok(json) = resp.json::<serde_json::Value>().await {
+                    if let Some(arr) = json.get("producers").and_then(|v| v.as_array()) {
+                        for p in arr {
+                            producers.push(p.clone());
+                        }
+                    }
+                }
+            }
+        }
+        Ok(producers)
     }
     
     /// Handle topic pause
@@ -207,6 +241,9 @@ impl Clone for NsqadminServer {
         Self {
             config: self.config.clone(),
             metrics: self.metrics.clone(),
+            http_client: self.http_client.clone(),
+            start_time: self.start_time,
+            start_instant: self.start_instant,
         }
     }
 }
