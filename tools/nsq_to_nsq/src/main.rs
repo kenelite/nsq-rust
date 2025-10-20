@@ -1,12 +1,12 @@
 //! nsq_to_nsq - Topic/channel replication tool
 
 use clap::Parser;
+use futures::SinkExt;
 use nsq_protocol::{Command, Frame, FrameType, Message, NsqDecoder, NsqEncoder};
 use tokio::net::TcpStream;
 use tokio_stream::StreamExt;
 use tokio_util::codec::{FramedRead, FramedWrite};
-use tracing::{error, info, warn};
-use url::Url;
+use tracing::{error, info};
 
 #[derive(Parser, Debug)]
 #[command(name = "nsq_to_nsq")]
@@ -65,9 +65,9 @@ impl NsqReplicator {
     ) -> Self {
         Self {
             src_topic,
-            src_channel,
+            src_channel: src_channel.clone(),
             dst_topic,
-            dst_channel: dst_channel.unwrap_or_else(|| src_channel.clone()),
+            dst_channel: dst_channel.unwrap_or_else(|| src_channel),
             buffer_size,
             batch_size,
         }
@@ -141,8 +141,8 @@ impl NsqReplicator {
 
     async fn setup_source_connection(
         &self,
-        framed_read: &mut FramedRead<TcpStream, NsqDecoder>,
-        framed_write: &mut FramedWrite<TcpStream, NsqEncoder>,
+        framed_read: &mut FramedRead<tokio::net::tcp::OwnedReadHalf, NsqDecoder>,
+        framed_write: &mut FramedWrite<tokio::net::tcp::OwnedWriteHalf, NsqEncoder>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         // Send IDENTIFY command
         let identify_data = serde_json::json!({
@@ -186,8 +186,8 @@ impl NsqReplicator {
 
     async fn setup_destination_connection(
         &self,
-        framed_read: &mut FramedRead<TcpStream, NsqDecoder>,
-        framed_write: &mut FramedWrite<TcpStream, NsqEncoder>,
+        framed_read: &mut FramedRead<tokio::net::tcp::OwnedReadHalf, NsqDecoder>,
+        framed_write: &mut FramedWrite<tokio::net::tcp::OwnedWriteHalf, NsqEncoder>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         // Send IDENTIFY command
         let identify_data = serde_json::json!({
@@ -218,7 +218,7 @@ impl NsqReplicator {
 
     async fn publish_batch(
         &self,
-        framed_write: &mut FramedWrite<TcpStream, NsqEncoder>,
+        framed_write: &mut FramedWrite<tokio::net::tcp::OwnedWriteHalf, NsqEncoder>,
         messages: &[Message],
     ) -> Result<(), Box<dyn std::error::Error>> {
         if messages.is_empty() {

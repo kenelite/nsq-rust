@@ -1,6 +1,7 @@
 //! nsq_to_http - Consumer that posts messages to HTTP endpoints
 
 use clap::Parser;
+use futures::SinkExt;
 use nsq_protocol::{Command, Frame, FrameType, Message, NsqDecoder, NsqEncoder};
 use reqwest::Client;
 use std::time::Duration;
@@ -8,7 +9,6 @@ use tokio::net::TcpStream;
 use tokio_stream::StreamExt;
 use tokio_util::codec::{FramedRead, FramedWrite};
 use tracing::{error, info, warn};
-use url::Url;
 
 #[derive(Parser, Debug)]
 #[command(name = "nsq_to_http")]

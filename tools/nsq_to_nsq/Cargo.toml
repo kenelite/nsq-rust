@@ -24,5 +24,6 @@ bytes = { workspace = true }
 url = { workspace = true }
 tokio-util = { workspace = true }
 tokio-stream = { workspace = true }
+futures = { workspace = true }
 reqwest = { workspace = true }
 serde_json = { workspace = true }

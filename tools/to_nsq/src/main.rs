@@ -1,16 +1,14 @@
 //! to_nsq - Producer that reads from stdin/files
 
 use clap::Parser;
-use nsq_protocol::{Command, Frame, FrameType, Message, NsqDecoder, NsqEncoder};
-use std::path::PathBuf;
+use nsq_protocol::{Command, Frame, FrameType, NsqDecoder, NsqEncoder};
 use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader, stdin};
 use tokio::net::TcpStream;
 use tokio_stream::StreamExt;
-use tokio_util::codec::{FramedRead, FramedWrite, Encoder};
+use tokio_util::codec::{FramedRead, FramedWrite};
 use futures::SinkExt;
-use tracing::{error, info, warn};
-use url::Url;
+use tracing::{info, warn};
 
 #[derive(Parser, Debug)]
 #[command(name = "to_nsq")]
@@ -116,10 +114,7 @@ impl NsqProducer {
         
         info!("Ready to publish to topic '{}'", self.topic);
         
-        // Start publishing task
-        let publish_task = tokio::spawn(async move {
-            // This will be handled by the main function
-        });
+        // Publishing will be handled by the main function
         
         Ok(())
     }
@@ -255,6 +250,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     let args = Args::parse();
     
+    let topic = args.topic.clone();
     let producer = NsqProducer::new(
         args.topic,
         args.batch_size,
@@ -295,7 +291,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         info!("Connected successfully");
     }
     
-    info!("Ready to publish to topic '{}'", args.topic);
+    info!("Ready to publish to topic '{}'", topic);
     
     // Read input data
     let messages = if let Some(input_file) = &args.input_file {
