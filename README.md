@@ -123,6 +123,19 @@ curl -d "Message 1\nMessage 2\nMessage 3" http://127.0.0.1:4151/mpub?topic=test
 
 Open http://127.0.0.1:4171 in your browser to access the NSQAdmin interface.
 
+**Web UI Features:**
+- 📊 Real-time dashboard with cluster statistics
+- 📝 Create, pause, resume, and delete topics via UI
+- 🔍 Search and filter topics and channels
+- 🖥️ Monitor all nsqd nodes
+- ⚡ Performance metrics and charts
+
+**Create a Topic via Web UI:**
+1. Navigate to the Topics page at `http://127.0.0.1:4171/topics`
+2. Click the "Create Topic" button
+3. Enter the topic name (alphanumeric, underscore, dash, and dot allowed)
+4. Click "Create Topic" to confirm
+
 ## 📖 Configuration
 
 ### NSQD Configuration
@@ -239,6 +252,50 @@ curl http://127.0.0.1:4151/stats
 # Get NSQLookupd statistics
 curl http://127.0.0.1:4161/stats
 ```
+
+#### NSQAdmin API
+
+NSQAdmin provides aggregated cluster-wide management APIs:
+
+```bash
+# Get aggregated cluster statistics
+curl http://127.0.0.1:4171/api/stats
+
+# Get all topics (aggregated from all nsqd nodes)
+curl http://127.0.0.1:4171/api/topics
+
+# Get all nodes
+curl http://127.0.0.1:4171/api/nodes
+
+# Create topic on all nsqd nodes
+curl -X POST http://127.0.0.1:4171/api/topic/my_topic/create
+
+# Pause topic on all nsqd nodes
+curl -X POST http://127.0.0.1:4171/api/topic/my_topic/pause
+
+# Unpause topic on all nsqd nodes
+curl -X POST http://127.0.0.1:4171/api/topic/my_topic/unpause
+
+# Delete topic from all nsqd nodes
+curl -X POST http://127.0.0.1:4171/api/topic/my_topic/delete
+
+# Create channel on all nsqd nodes
+curl -X POST http://127.0.0.1:4171/api/channel/my_topic/my_channel/create
+
+# Pause channel on all nsqd nodes
+curl -X POST http://127.0.0.1:4171/api/channel/my_topic/my_channel/pause
+
+# Unpause channel on all nsqd nodes
+curl -X POST http://127.0.0.1:4171/api/channel/my_topic/my_channel/unpause
+
+# Delete channel from all nsqd nodes
+curl -X POST http://127.0.0.1:4171/api/channel/my_topic/my_channel/delete
+
+# Empty channel on all nsqd nodes
+curl -X POST http://127.0.0.1:4171/api/channel/my_topic/my_channel/empty
+```
+
+**Note:** NSQAdmin APIs automatically apply operations to all nsqd nodes in the cluster, making it easier to manage distributed deployments.
 
 ### TCP Protocol
 
@@ -418,11 +475,13 @@ cargo bench
 
 - [Installation Guide](docs/installation.md)
 - [Configuration Reference](docs/configuration.md)
-- [API Reference](docs/api.md)
+- [API Reference](docs/api-reference.md)
+- [Architecture](docs/architecture.md)
 - [Deployment Guide](docs/deployment.md)
-- [Performance Tuning](docs/performance.md)
-- [Troubleshooting](docs/troubleshooting.md)
-- [Contributing](docs/contributing.md)
+- [Development Guide](docs/development.md)
+- [NSQAdmin Quick Start](docs/nsqadmin-quickstart.md)
+- [NSQAdmin Implementation](docs/nsqadmin-implementation.md)
+- [Docker Guide](docs/docker.md)
 
 ## 🤝 Contributing
 

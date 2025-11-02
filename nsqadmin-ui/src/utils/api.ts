@@ -65,8 +65,16 @@ export const nsqdApi = {
     await api.post(`${address}/channel/unpause?topic=${topic}&channel=${channel}`)
   },
   
+  createTopic: async (address: string, topic: string): Promise<void> => {
+    await api.post(`${address}/topic/create?topic=${topic}`)
+  },
+  
   deleteTopic: async (address: string, topic: string): Promise<void> => {
     await api.post(`${address}/topic/delete?topic=${topic}`)
+  },
+  
+  createChannel: async (address: string, topic: string, channel: string): Promise<void> => {
+    await api.post(`${address}/channel/create?topic=${topic}&channel=${channel}`)
   },
   
   deleteChannel: async (address: string, topic: string, channel: string): Promise<void> => {
@@ -107,6 +115,60 @@ export const lookupdApi = {
   lookupTopic: async (address: string, topic: string): Promise<any[]> => {
     const response = await api.get(`${address}/lookup?topic=${topic}`)
     return response.data.producers || []
+  },
+}
+
+// NSQAdmin API
+export const nsqadminApi = {
+  getStats: async (address: string = ''): Promise<any> => {
+    const response = await api.get(`${address}/api/stats`)
+    return response.data
+  },
+  
+  getTopics: async (address: string = ''): Promise<any> => {
+    const response = await api.get(`${address}/api/topics`)
+    return response.data
+  },
+  
+  getNodes: async (address: string = ''): Promise<any> => {
+    const response = await api.get(`${address}/api/nodes`)
+    return response.data
+  },
+  
+  createTopic: async (topic: string, address: string = ''): Promise<void> => {
+    await api.post(`${address}/api/topic/${topic}/create`)
+  },
+  
+  pauseTopic: async (topic: string, address: string = ''): Promise<void> => {
+    await api.post(`${address}/api/topic/${topic}/pause`)
+  },
+  
+  unpauseTopic: async (topic: string, address: string = ''): Promise<void> => {
+    await api.post(`${address}/api/topic/${topic}/unpause`)
+  },
+  
+  deleteTopic: async (topic: string, address: string = ''): Promise<void> => {
+    await api.post(`${address}/api/topic/${topic}/delete`)
+  },
+  
+  createChannel: async (topic: string, channel: string, address: string = ''): Promise<void> => {
+    await api.post(`${address}/api/channel/${topic}/${channel}/create`)
+  },
+  
+  pauseChannel: async (topic: string, channel: string, address: string = ''): Promise<void> => {
+    await api.post(`${address}/api/channel/${topic}/${channel}/pause`)
+  },
+  
+  unpauseChannel: async (topic: string, channel: string, address: string = ''): Promise<void> => {
+    await api.post(`${address}/api/channel/${topic}/${channel}/unpause`)
+  },
+  
+  deleteChannel: async (topic: string, channel: string, address: string = ''): Promise<void> => {
+    await api.post(`${address}/api/channel/${topic}/${channel}/delete`)
+  },
+  
+  emptyChannel: async (topic: string, channel: string, address: string = ''): Promise<void> => {
+    await api.post(`${address}/api/channel/${topic}/${channel}/empty`)
   },
 }
 

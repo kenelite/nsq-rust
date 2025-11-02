@@ -23,6 +23,7 @@ use crate::config::NsqdConfig;
 use crate::topic::Topic;
 use crate::client::{Client, ClientInfo};
 use crate::stats::StatsCollector;
+use tower_http::cors::{CorsLayer, Any};
 
 /// NSQd server
 pub struct NsqdServer {
@@ -308,6 +309,12 @@ impl NsqdServer {
     fn create_http_router(&self) -> Router {
         let server = self.clone();
         
+        // Configure CORS to allow frontend access during development
+        let cors = CorsLayer::new()
+            .allow_origin(Any)
+            .allow_methods(Any)
+            .allow_headers(Any);
+        
         Router::new()
             .route("/ping", get(|| async { "OK" }))
             .route("/info", get(Self::handle_info))
@@ -324,6 +331,7 @@ impl NsqdServer {
             .route("/config/:key", get(|| async { Json(serde_json::json!({"value": ""})) }))
             .route("/config/:key", post(|| async { "OK" }))
             .route("/debug/freememory", get(|| async { Json(serde_json::json!({"memory": 0})) }))
+            .layer(cors)
             .with_state(server)
     }
 

@@ -12,7 +12,10 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use nsq_common::{Metrics, Result, NsqError, NsqadminConfig};
-use tower_http::services::ServeDir;
+use tower_http::{
+    services::ServeDir,
+    cors::{CorsLayer, Any},
+};
 
 pub struct NsqadminServer {
     config: NsqadminConfig,
@@ -98,6 +101,12 @@ impl NsqadminServer {
     fn create_router(self) -> Router {
         let server = Arc::new(self);
         
+        // Configure CORS
+        let cors = CorsLayer::new()
+            .allow_origin(Any)
+            .allow_methods(Any)
+            .allow_headers(Any);
+        
         Router::new()
             // API routes
             .route("/api/ping", get(Self::handle_ping))
@@ -117,6 +126,7 @@ impl NsqadminServer {
             .route("/api/channel/:topic/:channel/empty", post(Self::handle_channel_empty))
             // Serve static files from nsqadmin-ui/dist
             .nest_service("/", ServeDir::new("../nsqadmin-ui/dist"))
+            .layer(cors)
             .with_state(server)
     }
     
@@ -243,6 +253,34 @@ impl NsqadminServer {
                             }
                         }
                     }
+                }
+            }
+        }
+        
+        // Add directly configured nsqd nodes (if not already from lookupd)
+        for addr in &self.config.nsqd_http_addresses {
+            let base = Self::normalize_address(addr);
+            
+            // Try to get node info from nsqd /stats endpoint
+            if let Ok(resp) = self.http_client.get(&format!("{}/stats?format=json", base)).send().await {
+                if let Ok(stats) = resp.json::<serde_json::Value>().await {
+                    // Extract host and port from address
+                    let parts: Vec<&str> = base.trim_start_matches("http://").trim_start_matches("https://").split(':').collect();
+                    let host = parts.first().unwrap_or(&"127.0.0.1");
+                    let http_port = parts.get(1).and_then(|p| p.parse::<u64>().ok()).unwrap_or(4151);
+                    
+                    // Create producer info
+                    let producer = json!({
+                        "broadcast_address": host,
+                        "hostname": stats.get("host").and_then(|v| v.as_str()).unwrap_or(host),
+                        "http_port": http_port,
+                        "tcp_port": http_port - 1, // Assume TCP port is HTTP port - 1
+                        "version": stats.get("version").and_then(|v| v.as_str()).unwrap_or("1.3.0"),
+                        "last_update": chrono::Utc::now().timestamp(),
+                        "topics": stats.get("topics").and_then(|v| v.as_array()).map(|t| t.len()).unwrap_or(0),
+                    });
+                    
+                    producers_map.insert(host.to_string(), producer);
                 }
             }
         }
