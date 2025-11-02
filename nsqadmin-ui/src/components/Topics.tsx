@@ -7,16 +7,21 @@ import {
   Pause,
   Play,
   Trash2,
-  MoreHorizontal
+  MoreHorizontal,
+  X
 } from 'lucide-react'
 import { useStats } from '../hooks/useStats'
 import { cn } from '../utils/cn'
 import toast from 'react-hot-toast'
+import { nsqadminApi } from '../utils/api'
 
 export function Topics() {
-  const { stats } = useStats()
+  const { stats, refetch } = useStats()
   const [searchTerm, setSearchTerm] = useState('')
   const [showPausedOnly, setShowPausedOnly] = useState(false)
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [newTopicName, setNewTopicName] = useState('')
+  const [isCreating, setIsCreating] = useState(false)
 
   const filteredTopics = stats?.topics?.filter(topic => {
     const matchesSearch = topic.topic_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -24,31 +29,62 @@ export function Topics() {
     return matchesSearch && matchesFilter
   }) || []
 
+  const handleCreateTopic = async () => {
+    if (!newTopicName.trim()) {
+      toast.error('Please enter a topic name')
+      return
+    }
+
+    // Validate topic name (alphanumeric, underscore, dash, dot)
+    const validTopicName = /^[a-zA-Z0-9_.-]+$/
+    if (!validTopicName.test(newTopicName)) {
+      toast.error('Topic name can only contain letters, numbers, underscores, dashes, and dots')
+      return
+    }
+
+    setIsCreating(true)
+    try {
+      await nsqadminApi.createTopic(newTopicName)
+      toast.success(`Topic "${newTopicName}" created successfully`)
+      setNewTopicName('')
+      setShowCreateDialog(false)
+      // Refetch stats to show the new topic
+      setTimeout(() => refetch(), 500)
+    } catch (error) {
+      toast.error(`Failed to create topic: ${error}`)
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
   const handlePauseTopic = async (topicName: string) => {
     try {
-      // TODO: Implement actual API call
-      toast.success(`Topic ${topicName} paused`)
+      await nsqadminApi.pauseTopic(topicName)
+      toast.success(`Topic "${topicName}" paused`)
+      setTimeout(() => refetch(), 500)
     } catch (error) {
-      toast.error('Failed to pause topic')
+      toast.error(`Failed to pause topic: ${error}`)
     }
   }
 
   const handleUnpauseTopic = async (topicName: string) => {
     try {
-      // TODO: Implement actual API call
-      toast.success(`Topic ${topicName} unpaused`)
+      await nsqadminApi.unpauseTopic(topicName)
+      toast.success(`Topic "${topicName}" unpaused`)
+      setTimeout(() => refetch(), 500)
     } catch (error) {
-      toast.error('Failed to unpause topic')
+      toast.error(`Failed to unpause topic: ${error}`)
     }
   }
 
   const handleDeleteTopic = async (topicName: string) => {
     if (window.confirm(`Are you sure you want to delete topic "${topicName}"?`)) {
       try {
-        // TODO: Implement actual API call
-        toast.success(`Topic ${topicName} deleted`)
+        await nsqadminApi.deleteTopic(topicName)
+        toast.success(`Topic "${topicName}" deleted`)
+        setTimeout(() => refetch(), 500)
       } catch (error) {
-        toast.error('Failed to delete topic')
+        toast.error(`Failed to delete topic: ${error}`)
       }
     }
   }
@@ -65,7 +101,10 @@ export function Topics() {
             Manage your NSQ topics
           </p>
         </div>
-        <button className="btn-primary">
+        <button 
+          className="btn-primary"
+          onClick={() => setShowCreateDialog(true)}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Create Topic
         </button>
@@ -188,6 +227,75 @@ export function Topics() {
               : 'Create your first topic to get started'
             }
           </p>
+        </div>
+      )}
+
+      {/* Create Topic Dialog */}
+      {showCreateDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Create New Topic
+              </h2>
+              <button
+                onClick={() => {
+                  setShowCreateDialog(false)
+                  setNewTopicName('')
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Topic Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newTopicName}
+                    onChange={(e) => setNewTopicName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !isCreating) {
+                        handleCreateTopic()
+                      }
+                    }}
+                    placeholder="e.g., my_topic"
+                    className="input w-full"
+                    autoFocus
+                    disabled={isCreating}
+                  />
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    Only letters, numbers, underscores, dashes, and dots are allowed
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => {
+                  setShowCreateDialog(false)
+                  setNewTopicName('')
+                }}
+                className="btn-secondary"
+                disabled={isCreating}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateTopic}
+                className="btn-primary"
+                disabled={isCreating || !newTopicName.trim()}
+              >
+                {isCreating ? 'Creating...' : 'Create Topic'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

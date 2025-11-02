@@ -152,6 +152,7 @@ pub struct StatsCollector {
     /// Clients
     clients: Arc<RwLock<HashMap<Uuid, Arc<Client>>>>,
     /// Metrics
+    #[allow(dead_code)]
     metrics: Metrics,
     /// Start time
     start_time: std::time::Instant,
@@ -332,6 +333,11 @@ impl StatsCollector {
         }
         
         client_stats
+    }
+    
+    /// Get metrics
+    pub fn metrics(&self) -> &Metrics {
+        &self.metrics
     }
     
     /// Get overall statistics

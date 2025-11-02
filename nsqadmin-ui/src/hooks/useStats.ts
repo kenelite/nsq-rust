@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAppStore } from '../stores/useAppStore'
-import { nsqdApi, lookupdApi, healthCheck } from '../utils/api'
+import { nsqdApi, lookupdApi, healthCheck, nsqadminApi } from '../utils/api'
 import type { Stats, LookupdStats } from '../types'
 
 export function useStats() {
@@ -14,7 +14,19 @@ export function useStats() {
     try {
       setError(null)
       
-      // Check health first
+      // Try to fetch from nsqadmin first (aggregated stats)
+      try {
+        const adminStats = await nsqadminApi.getStats()
+        setStats(adminStats)
+        setIsConnected(true)
+        setLoading(false)
+        return
+      } catch (adminError) {
+        // If nsqadmin is not available, fall back to direct nsqd/lookupd queries
+        console.warn('NSQAdmin not available, falling back to direct queries:', adminError)
+      }
+      
+      // Fallback: Check health of direct services
       const nsqdHealthy = await healthCheck(nsqdAddress)
       const lookupdHealthy = await healthCheck(lookupdAddress)
       

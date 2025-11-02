@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use parking_lot::RwLock;
 use nsq_common::{Metrics, Result, NsqError, NsqlookupdConfig};
 use tokio::time::Duration;
+use tower_http::cors::{CorsLayer, Any};
 
 /// Producer registration information
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -482,6 +483,12 @@ impl NsqlookupdServer {
     fn create_router(&self) -> Router {
         let server = Arc::new(self.clone());
         
+        // Configure CORS to allow frontend access during development
+        let cors = CorsLayer::new()
+            .allow_origin(Any)
+            .allow_methods(Any)
+            .allow_headers(Any);
+        
         Router::new()
             .route("/ping", get(|| async { "OK" }))
             .route("/info", get(Self::handle_info))
@@ -500,6 +507,7 @@ impl NsqlookupdServer {
             .route("/api/topics", get(Self::handle_api_topics))
             .route("/api/nodes", get(Self::handle_api_nodes))
             .route("/api/topics/:topic", get(Self::handle_api_topic_detail))
+            .layer(cors)
             .with_state(server)
     }
     
