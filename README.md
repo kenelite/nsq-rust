@@ -124,11 +124,17 @@ curl -d "Message 1\nMessage 2\nMessage 3" http://127.0.0.1:4151/mpub?topic=test
 Open http://127.0.0.1:4171 in your browser to access the NSQAdmin interface.
 
 **Web UI Features:**
-- 📊 Real-time dashboard with cluster statistics
-- 📝 Create, pause, resume, and delete topics via UI
-- 🔍 Search and filter topics and channels
-- 🖥️ Monitor all nsqd nodes
-- ⚡ Performance metrics and charts
+- 📊 **Dashboard**: Real-time cluster overview and statistics
+- 📝 **Topics**: Create, pause, resume, and delete topics
+- 🔌 **Channels**: Manage channels and view client connections
+- 🖥️ **Nodes**: Monitor all nsqd nodes and their status
+- ⚡ **Performance**: Advanced performance monitoring and analysis
+  - Real-time throughput charts
+  - Requeue and timeout rate tracking
+  - Intelligent performance recommendations
+  - System health indicators
+- 🔍 **Search & Filter**: Quick navigation across all resources
+- 🌙 **Dark Mode**: Full dark mode support
 
 **Create a Topic via Web UI:**
 1. Navigate to the Topics page at `http://127.0.0.1:4171/topics`

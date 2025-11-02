@@ -121,6 +121,14 @@ else
     echo -e "${RED}✗${NC}"
 fi
 
+# Test Performance page
+echo -n "  Performance (/performance) ... "
+if curl -s "${FRONTEND}/performance" | grep -q "NSQ Admin"; then
+    echo -e "${GREEN}✓${NC}"
+else
+    echo -e "${RED}✗${NC}"
+fi
+
 echo ""
 
 # Summary
@@ -129,9 +137,10 @@ echo -e "${GREEN}✓ All tests passed!${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 echo -e "${YELLOW}Open the following URLs in your browser:${NC}"
-echo -e "  ${GREEN}Dashboard:${NC} ${FRONTEND}"
-echo -e "  ${GREEN}Topics:${NC}    ${FRONTEND}/topics"
-echo -e "  ${GREEN}Nodes:${NC}     ${FRONTEND}/nodes"
-echo -e "  ${GREEN}Channels:${NC}  ${FRONTEND}/channels"
+echo -e "  ${GREEN}Dashboard:${NC}    ${FRONTEND}"
+echo -e "  ${GREEN}Topics:${NC}       ${FRONTEND}/topics"
+echo -e "  ${GREEN}Nodes:${NC}        ${FRONTEND}/nodes"
+echo -e "  ${GREEN}Channels:${NC}     ${FRONTEND}/channels"
+echo -e "  ${GREEN}Performance:${NC}  ${FRONTEND}/performance"
 echo ""
 
