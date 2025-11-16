@@ -53,8 +53,6 @@ struct Args {
 
 struct NsqProducer {
     topic: String,
-    batch_size: usize,
-    delay_ms: u64,
     max_message_size: usize,
     add_timestamp: bool,
     prefix: Option<String>,
@@ -63,60 +61,16 @@ struct NsqProducer {
 impl NsqProducer {
     fn new(
         topic: String,
-        batch_size: usize,
-        delay_ms: u64,
         max_message_size: usize,
         add_timestamp: bool,
         prefix: Option<String>,
     ) -> Self {
         Self {
             topic,
-            batch_size,
-            delay_ms,
             max_message_size,
             add_timestamp,
             prefix,
         }
-    }
-
-    async fn connect_and_publish(&self, address: &str) -> Result<(), Box<dyn std::error::Error>> {
-        info!("Connecting to NSQd at {}", address);
-        
-        let stream = TcpStream::connect(address).await?;
-        let (read_half, write_half) = stream.into_split();
-        
-        let mut framed_read = FramedRead::new(read_half, NsqDecoder::new());
-        let mut framed_write = FramedWrite::new(write_half, NsqEncoder);
-        
-        // Send IDENTIFY command
-        let identify_data = serde_json::json!({
-            "client_id": "to_nsq",
-            "hostname": "to_nsq",
-            "user_agent": "to_nsq/1.0",
-            "feature_negotiation": true,
-            "heartbeat_interval": 30000,
-            "output_buffer_size": 16384,
-            "output_buffer_timeout": 250
-        });
-        
-        let identify_cmd = Command::Identify { data: identify_data };
-        let identify_frame = Frame::new(FrameType::Response, identify_cmd.to_bytes()?);
-        framed_write.send(identify_frame).await?;
-        
-        // Wait for OK response
-        if let Some(frame) = framed_read.next().await {
-            let frame = frame?;
-            if frame.frame_type != FrameType::Response {
-                return Err("Expected OK response after IDENTIFY".into());
-            }
-            info!("Connected successfully");
-        }
-        
-        info!("Ready to publish to topic '{}'", self.topic);
-        
-        // Publishing will be handled by the main function
-        
-        Ok(())
     }
 
     async fn publish_message(&self, framed_write: &mut FramedWrite<tokio::net::tcp::OwnedWriteHalf, NsqEncoder>, content: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
@@ -253,8 +207,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let topic = args.topic.clone();
     let producer = NsqProducer::new(
         args.topic,
-        args.batch_size,
-        args.delay_ms,
         args.max_message_size,
         args.add_timestamp,
         args.prefix,
@@ -305,19 +257,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
     
-    info!("Read {} messages from input", messages.len());
+    let total_messages = messages.len();
+    info!("Read {} messages from input", total_messages);
+    info!("Batch size: {}, Delay between batches: {}ms", args.batch_size, args.delay_ms);
     
     // Publish messages in batches
+    let total_batches = (total_messages + args.batch_size - 1) / args.batch_size;
+    let mut batch_count = 0;
     let mut batch = Vec::new();
-    for message in messages {
+    let mut published_count = 0;
+    
+    for (idx, message) in messages.into_iter().enumerate() {
         batch.push(message);
         
         if batch.len() >= args.batch_size {
+            batch_count += 1;
+            let batch_len = batch.len();
+            info!("Publishing batch {}/{} ({} messages)", batch_count, total_batches, batch_len);
             producer.publish_batch(&mut framed_write, &batch).await?;
+            published_count += batch_len;
             batch.clear();
             
-            // Add delay between batches
-            if args.delay_ms > 0 {
+            // Add delay between batches (not after the last batch)
+            if args.delay_ms > 0 && idx < total_messages - 1 {
+                info!("Waiting {}ms before next batch...", args.delay_ms);
                 tokio::time::sleep(tokio::time::Duration::from_millis(args.delay_ms)).await;
             }
         }
@@ -325,10 +288,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Publish remaining messages
     if !batch.is_empty() {
+        batch_count += 1;
+        let batch_len = batch.len();
+        info!("Publishing final batch {}/{} ({} messages)", batch_count, total_batches, batch_len);
         producer.publish_batch(&mut framed_write, &batch).await?;
+        published_count += batch_len;
     }
     
-    info!("Finished publishing all messages");
+    info!("Finished publishing {} messages in {} batches", published_count, batch_count);
     
     Ok(())
 }
