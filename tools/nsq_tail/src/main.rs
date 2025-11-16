@@ -2,16 +2,11 @@
 
 use clap::Parser;
 use nsq_protocol::{Command, Frame, FrameType, Message, NsqDecoder, NsqEncoder};
-use std::sync::Arc;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
-use tokio::sync::mpsc;
-use tokio::time::{sleep, Duration};
 use tokio_stream::StreamExt;
 use tokio_util::codec::{FramedRead, FramedWrite};
 use futures::SinkExt;
 use tracing::{error, info, warn};
-use url::Url;
 
 #[derive(Parser, Debug)]
 #[command(name = "nsq_tail")]

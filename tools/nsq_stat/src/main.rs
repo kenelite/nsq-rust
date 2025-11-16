@@ -3,10 +3,8 @@
 use clap::Parser;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use tokio::time::{sleep, Duration};
-use tracing::{error, info, warn};
-use url::Url;
+use tracing::error;
 
 #[derive(Parser, Debug)]
 #[command(name = "nsq_stat")]
