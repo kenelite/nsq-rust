@@ -4,8 +4,10 @@ use clap::Parser;
 use futures::SinkExt;
 use nsq_protocol::{Command, Frame, FrameType, Message, NsqDecoder, NsqEncoder};
 use reqwest::Client;
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::TcpStream;
+use tokio::sync::Semaphore;
 use tokio_stream::StreamExt;
 use tokio_util::codec::{FramedRead, FramedWrite};
 use tracing::{error, info, warn};
@@ -64,8 +66,8 @@ struct HttpPoster {
     endpoint: String,
     method: String,
     headers: Vec<(String, String)>,
-    timeout: Duration,
     max_concurrent: usize,
+    semaphore: Arc<Semaphore>,
     retry_failed: bool,
     max_retries: u32,
 }
@@ -98,14 +100,21 @@ impl HttpPoster {
             endpoint,
             method,
             headers: parsed_headers,
-            timeout: Duration::from_secs(timeout),
             max_concurrent,
+            semaphore: Arc::new(Semaphore::new(max_concurrent)),
             retry_failed,
             max_retries,
         })
     }
 
     async fn post_message(&self, message: &Message) -> Result<(), Box<dyn std::error::Error>> {
+        // Acquire semaphore permit to control concurrency
+        let _permit = self.semaphore.acquire().await
+            .map_err(|e| format!("Failed to acquire semaphore: {}", e))?;
+        
+        info!("Processing message (concurrent requests: {})", 
+            self.max_concurrent - self.semaphore.available_permits());
+        
         let mut request = match self.method.to_uppercase().as_str() {
             "GET" => self.client.get(&self.endpoint),
             "POST" => self.client.post(&self.endpoint),
@@ -167,11 +176,11 @@ impl HttpPoster {
 struct NsqToHttpConsumer {
     topic: String,
     channel: String,
-    http_poster: HttpPoster,
+    http_poster: Arc<HttpPoster>,
 }
 
 impl NsqToHttpConsumer {
-    fn new(topic: String, channel: String, http_poster: HttpPoster) -> Self {
+    fn new(topic: String, channel: String, http_poster: Arc<HttpPoster>) -> Self {
         Self {
             topic,
             channel,
@@ -220,25 +229,37 @@ impl NsqToHttpConsumer {
         let sub_frame = Frame::new(FrameType::Response, sub_cmd.to_bytes()?);
         framed_write.send(sub_frame).await?;
         
-        // Set ready count
-        let rdy_cmd = Command::Rdy { count: 1 };
+        // Set ready count to max_concurrent for parallel processing
+        let max_concurrent = self.http_poster.max_concurrent;
+        let rdy_cmd = Command::Rdy { count: max_concurrent as u32 };
         let rdy_frame = Frame::new(FrameType::Response, rdy_cmd.to_bytes()?);
         framed_write.send(rdy_frame).await?;
         
-        info!("Subscribed to topic '{}' channel '{}'", self.topic, self.channel);
+        info!("Subscribed to topic '{}' channel '{}' with RDY count {}", 
+            self.topic, self.channel, max_concurrent);
         
         // Main message processing loop
+        let mut in_flight = 0usize;
         while let Some(frame) = framed_read.next().await {
             let frame = frame?;
             
             match frame.frame_type {
                 FrameType::Message => {
-                    self.handle_message(frame.body).await?;
+                    // Spawn async task to handle message concurrently
+                    let http_poster = Arc::clone(&self.http_poster);
+                    let message_data = frame.body;
                     
-                    // Send RDY for next message
-                    let rdy_cmd = Command::Rdy { count: 1 };
-                    let rdy_frame = Frame::new(FrameType::Response, rdy_cmd.to_bytes()?);
-                    framed_write.send(rdy_frame).await?;
+                    tokio::spawn(Self::handle_message(http_poster, message_data));
+                    
+                    in_flight += 1;
+                    
+                    // Periodically refresh RDY count to maintain flow
+                    if in_flight >= max_concurrent / 2 {
+                        let rdy_cmd = Command::Rdy { count: max_concurrent as u32 };
+                        let rdy_frame = Frame::new(FrameType::Response, rdy_cmd.to_bytes()?);
+                        framed_write.send(rdy_frame).await?;
+                        in_flight = 0;
+                    }
                 }
                 FrameType::Response => {
                     info!("Received response: {}", String::from_utf8_lossy(&frame.body));
@@ -253,21 +274,24 @@ impl NsqToHttpConsumer {
         Ok(())
     }
 
-    async fn handle_message(&mut self, message_data: bytes::Bytes) -> Result<(), Box<dyn std::error::Error>> {
-        let message = Message::from_bytes(message_data)?;
-        
-        match self.http_poster.post_message(&message).await {
-            Ok(_) => {
-                info!("Successfully posted message to HTTP endpoint");
+    async fn handle_message(http_poster: Arc<HttpPoster>, message_data: bytes::Bytes) {
+        match Message::from_bytes(message_data) {
+            Ok(message) => {
+                match http_poster.post_message(&message).await {
+                    Ok(_) => {
+                        info!("Successfully posted message to HTTP endpoint");
+                    }
+                    Err(e) => {
+                        error!("Failed to post message to HTTP endpoint: {}", e);
+                        // In a real implementation, you might want to requeue the message
+                        // or handle the error differently based on requirements
+                    }
+                }
             }
             Err(e) => {
-                error!("Failed to post message to HTTP endpoint: {}", e);
-                // In a real implementation, you might want to requeue the message
-                // or handle the error differently based on requirements
+                error!("Failed to parse message: {}", e);
             }
         }
-        
-        Ok(())
     }
 }
 
@@ -333,7 +357,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(1);
     }
     
-    let http_poster = HttpPoster::new(
+    let http_poster = Arc::new(HttpPoster::new(
         args.http_endpoint,
         args.http_method,
         args.http_headers,
@@ -341,7 +365,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         args.max_concurrent_requests,
         args.retry_failed,
         args.max_retries,
-    )?;
+    )?);
     
     let mut consumer = NsqToHttpConsumer::new(
         args.topic,
