@@ -249,23 +249,7 @@ impl NsqToHttpConsumer {
                     let http_poster = Arc::clone(&self.http_poster);
                     let message_data = frame.body;
                     
-                    tokio::spawn(async move {
-                        match Message::from_bytes(message_data) {
-                            Ok(message) => {
-                                match http_poster.post_message(&message).await {
-                                    Ok(_) => {
-                                        info!("Successfully posted message to HTTP endpoint");
-                                    }
-                                    Err(e) => {
-                                        error!("Failed to post message to HTTP endpoint: {}", e);
-                                    }
-                                }
-                            }
-                            Err(e) => {
-                                error!("Failed to parse message: {}", e);
-                            }
-                        }
-                    });
+                    tokio::spawn(Self::handle_message(http_poster, message_data));
                     
                     in_flight += 1;
                     
@@ -288,6 +272,26 @@ impl NsqToHttpConsumer {
         }
         
         Ok(())
+    }
+
+    async fn handle_message(http_poster: Arc<HttpPoster>, message_data: bytes::Bytes) {
+        match Message::from_bytes(message_data) {
+            Ok(message) => {
+                match http_poster.post_message(&message).await {
+                    Ok(_) => {
+                        info!("Successfully posted message to HTTP endpoint");
+                    }
+                    Err(e) => {
+                        error!("Failed to post message to HTTP endpoint: {}", e);
+                        // In a real implementation, you might want to requeue the message
+                        // or handle the error differently based on requirements
+                    }
+                }
+            }
+            Err(e) => {
+                error!("Failed to parse message: {}", e);
+            }
+        }
     }
 }
 
