@@ -298,7 +298,7 @@ async fn test_message_persistence_compatibility() {
     let topics = stats["topics"].as_array().expect("topics should be an array");
     let topic = topics.iter().find(|t| t["topic_name"].as_str() == Some("persistence-compat-test"))
         .expect("Topic should exist");
-    let message_count = topic["message_count"].as_u64().expect("message_count should be a number");
+    let _message_count = topic["message_count"].as_u64().expect("message_count should be a number");
     // Note: This test may fail if persistence is not fully implemented yet
-    // assert_eq!(message_count, messages.len() as u64);
+    // assert_eq!(_message_count, messages.len() as u64);
 }
