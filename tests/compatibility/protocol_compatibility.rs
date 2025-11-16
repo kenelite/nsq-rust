@@ -3,7 +3,6 @@
 use crate::test_utils::{TestEnvironment, TestConfig};
 use tokio::net::TcpStream;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use std::time::Duration;
 
 #[tokio::test]
 async fn test_tcp_protocol_compatibility() {
