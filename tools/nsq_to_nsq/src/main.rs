@@ -6,7 +6,7 @@ use nsq_protocol::{Command, Frame, FrameType, Message, NsqDecoder, NsqEncoder};
 use tokio::net::TcpStream;
 use tokio_stream::StreamExt;
 use tokio_util::codec::{FramedRead, FramedWrite};
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 #[derive(Parser, Debug)]
 #[command(name = "nsq_to_nsq")]
@@ -15,6 +15,10 @@ struct Args {
     /// Source NSQd TCP addresses
     #[arg(long)]
     src_nsqd_tcp_address: Vec<String>,
+    
+    /// Source Lookupd HTTP addresses
+    #[arg(long)]
+    src_lookupd_http_address: Vec<String>,
     
     /// Source topic
     #[arg(long)]
@@ -101,6 +105,7 @@ impl NsqReplicator {
         
         // Message replication loop
         let mut message_batch = Vec::new();
+        let mut messages_processed = 0usize;
         
         while let Some(frame) = src_framed_read.next().await {
             let frame = frame?;
@@ -109,11 +114,14 @@ impl NsqReplicator {
                 FrameType::Message => {
                     let message = Message::from_bytes(frame.body)?;
                     message_batch.push(message);
+                    messages_processed += 1;
                     
-                    // Send RDY for next message from source
-                    let rdy_cmd = Command::Rdy { count: 1 };
-                    let rdy_frame = Frame::new(FrameType::Response, rdy_cmd.to_bytes()?);
-                    src_framed_write.send(rdy_frame).await?;
+                    // Periodically refresh RDY count to maintain flow
+                    if messages_processed % (self.buffer_size / 4).max(1) == 0 {
+                        let rdy_cmd = Command::Rdy { count: self.buffer_size as u32 };
+                        let rdy_frame = Frame::new(FrameType::Response, rdy_cmd.to_bytes()?);
+                        src_framed_write.send(rdy_frame).await?;
+                    }
                     
                     // Publish batch when it reaches batch_size
                     if message_batch.len() >= self.batch_size {
@@ -176,10 +184,12 @@ impl NsqReplicator {
         let sub_frame = Frame::new(FrameType::Response, sub_cmd.to_bytes()?);
         framed_write.send(sub_frame).await?;
         
-        // Set ready count
-        let rdy_cmd = Command::Rdy { count: 1 };
+        // Set ready count based on buffer_size to control in-flight messages
+        let rdy_cmd = Command::Rdy { count: self.buffer_size as u32 };
         let rdy_frame = Frame::new(FrameType::Response, rdy_cmd.to_bytes()?);
         framed_write.send(rdy_frame).await?;
+        
+        info!("Source ready to receive up to {} in-flight messages", self.buffer_size);
         
         Ok(())
     }
@@ -254,25 +264,37 @@ async fn discover_nsqd_addresses(lookupd_addresses: &[String]) -> Result<Vec<Str
     
     for lookupd_addr in lookupd_addresses {
         let url = format!("http://{}/nodes", lookupd_addr);
-        let response = reqwest::get(&url).await?;
-        
-        if response.status().is_success() {
-            let nodes: serde_json::Value = response.json().await?;
-            
-            if let Some(producers) = nodes.get("producers") {
-                if let Some(producers_array) = producers.as_array() {
-                    for producer in producers_array {
-                        if let Some(broadcast_address) = producer.get("broadcast_address") {
-                            if let Some(tcp_port) = producer.get("tcp_port") {
-                                let address = format!("{}:{}", 
-                                    broadcast_address.as_str().unwrap_or("localhost"),
-                                    tcp_port.as_u64().unwrap_or(4150)
-                                );
-                                nsqd_addresses.push(address);
+        match reqwest::get(&url).await {
+            Ok(response) => {
+                if response.status().is_success() {
+                    match response.json::<serde_json::Value>().await {
+                        Ok(nodes) => {
+                            if let Some(producers) = nodes.get("producers") {
+                                if let Some(producers_array) = producers.as_array() {
+                                    for producer in producers_array {
+                                        if let Some(broadcast_address) = producer.get("broadcast_address") {
+                                            if let Some(tcp_port) = producer.get("tcp_port") {
+                                                let address = format!("{}:{}", 
+                                                    broadcast_address.as_str().unwrap_or("localhost"),
+                                                    tcp_port.as_u64().unwrap_or(4150)
+                                                );
+                                                nsqd_addresses.push(address);
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
+                        Err(e) => {
+                            warn!("Failed to parse JSON from {}: {}", lookupd_addr, e);
+                        }
                     }
+                } else {
+                    warn!("Failed to query lookupd {}: HTTP {}", lookupd_addr, response.status());
                 }
+            }
+            Err(e) => {
+                warn!("Failed to connect to lookupd {}: {}", lookupd_addr, e);
             }
         }
     }
@@ -286,8 +308,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     let args = Args::parse();
     
-    if args.src_nsqd_tcp_address.is_empty() {
-        eprintln!("Error: At least one source NSQd TCP address must be specified");
+    if args.src_nsqd_tcp_address.is_empty() && args.src_lookupd_http_address.is_empty() {
+        eprintln!("Error: At least one source NSQd TCP address or Lookupd HTTP address must be specified");
+        std::process::exit(1);
+    }
+    
+    let mut src_nsqd_addresses = args.src_nsqd_tcp_address;
+    
+    // Discover source NSQd addresses from lookupd if provided
+    if !args.src_lookupd_http_address.is_empty() {
+        match discover_nsqd_addresses(&args.src_lookupd_http_address).await {
+            Ok(discovered) => {
+                info!("Discovered {} source NSQd instances from lookupd", discovered.len());
+                src_nsqd_addresses.extend(discovered);
+            }
+            Err(e) => {
+                warn!("Failed to discover NSQd addresses from lookupd: {}", e);
+            }
+        }
+    }
+    
+    if src_nsqd_addresses.is_empty() {
+        eprintln!("Error: No source NSQd addresses available");
         std::process::exit(1);
     }
     
@@ -302,7 +344,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Try to connect to the first available source NSQd
     let mut connected = false;
-    for src_address in &args.src_nsqd_tcp_address {
+    for src_address in &src_nsqd_addresses {
         match replicator.replicate(src_address, &args.dst_nsqd_tcp_address).await {
             Ok(_) => {
                 connected = true;
