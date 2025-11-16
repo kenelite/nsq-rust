@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   Server, 
   Search, 
@@ -12,6 +13,7 @@ import { cn } from '../utils/cn'
 
 export function Nodes() {
   const { stats, lookupdStats } = useStats()
+  const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
 
   const nodes = [
@@ -160,7 +162,10 @@ export function Nodes() {
                     </span>
                   </div>
                 </div>
-                <button className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium">
+                <button 
+                  onClick={() => navigate(`/nodes/${encodeURIComponent(node.hostname)}`)}
+                  className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium transition-colors"
+                >
                   View Details
                 </button>
               </div>

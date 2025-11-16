@@ -4,6 +4,7 @@ import { Layout } from './components/Layout'
 import { Dashboard } from './components/Dashboard'
 import { Topics } from './components/Topics'
 import { Nodes } from './components/Nodes'
+import { NodeDetails } from './components/NodeDetails'
 import { Settings } from './components/Settings'
 import { Channels } from './components/Channels'
 import { Performance } from './components/Performance'
@@ -26,6 +27,7 @@ function App() {
         <Route index element={<Dashboard />} />
         <Route path="topics" element={<Topics />} />
         <Route path="nodes" element={<Nodes />} />
+        <Route path="nodes/:hostname" element={<NodeDetails />} />
         <Route path="channels" element={<Channels />} />
         <Route path="performance" element={<Performance />} />
         <Route path="settings" element={<Settings />} />
